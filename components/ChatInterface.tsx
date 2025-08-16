@@ -45,10 +45,10 @@ export function ChatInterface({ companion }: ChatInterfaceProps) {
   }, [messages])
 
   useEffect(() => {
-    // Start a new learning session
+    
     startSession()
 
-    // Add welcome message
+    
     const welcomeMessage: Message = {
       id: "welcome",
       content: `Hello! I'm ${companion.name}, your ${companion.subject} companion. I'm here to help you learn with a ${companion.teaching_style} approach. What would you like to explore today?`,
@@ -117,23 +117,28 @@ export function ChatInterface({ companion }: ChatInterfaceProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: inputMessage,
-          companion_id: companion.id,
-          session_id: sessionId,
-          conversation_history: messages.slice(-10), // Last 10 messages for context
+          companionName: companion.name,
+          subject: companion.subject,
+          personality: companion.personality_traits,
         }),
       })
 
       if (response.ok) {
         const data = await response.json()
-        const aiMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          content: data.response,
-          sender: "ai",
-          timestamp: new Date(),
+        if (data.success) {
+          const aiMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            content: data.data.message,
+            sender: "ai",
+            timestamp: new Date(),
+          }
+          setMessages((prev) => [...prev, aiMessage])
+        } else {
+          throw new Error(data.message || "Failed to get AI response")
         }
-        setMessages((prev) => [...prev, aiMessage])
       } else {
-        throw new Error("Failed to get AI response")
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to get AI response")
       }
     } catch (error) {
       console.error("Error sending message:", error)

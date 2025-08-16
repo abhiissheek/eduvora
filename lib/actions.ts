@@ -1,11 +1,9 @@
 "use server"
 
-import { createClient } from "@/supabase/server"
 import { redirect } from "next/navigation"
+import { cookies } from "next/headers"
 
 export async function signIn(prevState: any, formData: FormData) {
-  console.log("[v0] Sign in action called")
-
   if (!formData) {
     return { error: "Form data is missing" }
   }
@@ -17,108 +15,136 @@ export async function signIn(prevState: any, formData: FormData) {
     return { error: "Email and password are required" }
   }
 
-  const supabase = createClient()
-
   try {
-    console.log("[v0] Attempting to sign in with email:", email)
-
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email.toString(),
-      password: password.toString(),
+    console.log('Attempting login with:', { email: email.toString(), password: '***' })
+    
+    // Call MERN backend API via Next.js API route
+    const response = await fetch('http://localhost:3000/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: email.toString(),
+        password: password.toString(),
+      }),
     })
 
-    if (error) {
-      console.log("[v0] Sign in error:", error.message)
-      return { error: error.message }
+    console.log('Response status:', response.status)
+    console.log('Response headers:', Object.fromEntries(response.headers.entries()))
+
+    const result = await response.json()
+    console.log('Login API result:', result)
+
+    if (!response.ok || !result.success) {
+      console.log('Login failed:', result)
+      return { error: result.message || "Login failed" }
     }
 
-    console.log("[v0] Sign in successful")
+    // Set JWT token in cookie
+    const cookieStore = cookies()
+    cookieStore.set('auth-token', result.data.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 // 7 days
+    })
+
+    // Also set user data for easy access
+    cookieStore.set('user-data', JSON.stringify({
+      _id: result.data._id,
+      email: result.data.email,
+      name: result.data.name,
+      role: result.data.role
+    }), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 // 7 days
+    })
+
+    console.log('Login successful, cookies set')
     return { success: true }
   } catch (error) {
-    console.error("[v0] Login error:", error)
-    return { error: "An unexpected error occurred. Please try again." }
+    console.error('Login error:', error)
+    return { error: "Network error. Please try again." }
   }
 }
 
 export async function signUp(prevState: any, formData: FormData) {
-  console.log("[v0] Sign up action called")
-
   if (!formData) {
     return { error: "Form data is missing" }
   }
 
+  const name = formData.get("name")
   const email = formData.get("email")
   const password = formData.get("password")
-  const fullName = formData.get("fullName")
 
-  if (!email || !password || !fullName) {
-    return { error: "All fields are required" }
+  if (!name || !email || !password) {
+    return { error: "Name, email and password are required" }
   }
 
-  const supabase = createClient()
-
   try {
-    console.log("[v0] Attempting to sign up with email:", email)
-
-    const { data, error } = await supabase.auth.signUp({
-      email: email.toString(),
-      password: password.toString(),
-      options: {
-        emailRedirectTo:
-          process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ||
-          `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/dashboard`,
-        data: {
-          full_name: fullName.toString(),
-        },
+    console.log('Attempting signup with:', { name: name.toString(), email: email.toString(), password: '***' })
+    
+    // Call MERN backend API via Next.js API route
+    const response = await fetch('http://localhost:3000/api/auth/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify({
+        name: name.toString(),
+        email: email.toString(),
+        password: password.toString(),
+      }),
     })
 
-    if (error) {
-      console.log("[v0] Sign up error:", error.message)
-      return { error: error.message }
+    console.log('Signup response status:', response.status)
+
+    const result = await response.json()
+
+    if (!response.ok || !result.success) {
+      return { error: result.message || "Registration failed" }
     }
 
-    console.log("[v0] Sign up successful")
-    return { success: "Check your email to confirm your account." }
+    // Set JWT token in cookie
+    const cookieStore = cookies()
+    cookieStore.set('auth-token', result.data.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 // 7 days
+    })
+
+    // Also set user data for easy access
+    cookieStore.set('user-data', JSON.stringify({
+      _id: result.data._id,
+      email: result.data.email,
+      name: result.data.name,
+      role: result.data.role
+    }), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 // 7 days
+    })
+
+    return { success: true, message: "Registration successful!" }
   } catch (error) {
-    console.error("[v0] Sign up error:", error)
-    return { error: "An unexpected error occurred. Please try again." }
+    console.error('Registration error:', error)
+    return { error: "Network error. Please try again." }
   }
 }
 
 export async function signOut() {
-  const supabase = createClient()
-  await supabase.auth.signOut()
+  // Clear the auth cookies
+  const cookieStore = cookies()
+  cookieStore.delete('auth-token')
+  cookieStore.delete('user-data')
   redirect("/login")
 }
 
 export async function forgotPassword(prevState: any, formData: FormData) {
-  if (!formData) {
-    return { error: "Form data is missing" }
-  }
-
-  const email = formData.get("email")
-
-  if (!email) {
-    return { error: "Email is required" }
-  }
-
-  const supabase = createClient()
-
-  try {
-    const { error } = await supabase.auth.resetPasswordForEmail(email.toString(), {
-      redirectTo:
-        process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ||
-        `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/reset-password`,
-    })
-
-    if (error) {
-      return { error: error.message }
-    }
-
-    return { success: "Check your email for password reset instructions." }
-  } catch (error) {
-    console.error("Forgot password error:", error)
-    return { error: "An unexpected error occurred. Please try again." }
-  }
+  return { error: "Password reset functionality not implemented yet." }
 }

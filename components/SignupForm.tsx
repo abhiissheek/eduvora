@@ -2,8 +2,7 @@
 
 import type React from "react"
 
-import { useActionState } from "react"
-import { useFormStatus } from "react-dom"
+import { useState } from "react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -13,25 +12,29 @@ import { Label } from "@/components/ui/label"
 import { Loader2 } from "lucide-react"
 import { signUp } from "@/lib/actions"
 
-function SubmitButton() {
-  const { pending } = useFormStatus()
-
-  return (
-    <Button type="submit" disabled={pending} className="bg-[#A67C52] w-full hover:bg-[#BF926A]">
-      {pending ? (
-        <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Creating account...
-        </>
-      ) : (
-        "Create Account"
-      )}
-    </Button>
-  )
-}
-
 export function SignupForm({ className, ...props }: React.ComponentProps<"div">) {
-  const [state, formAction] = useActionState(signUp, null)
+  const [state, setState] = useState<{ error?: string; success?: string; message?: string } | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setState(null)
+
+    const formData = new FormData(e.currentTarget)
+    const result = await signUp(null, formData)
+    console.log('Signup result:', result)
+    
+    if (result.success) {
+      setState({ success: result.message || "Registration successful!" })
+      setIsLoading(false)
+      console.log('Signup successful, redirecting...')
+      window.location.href = "/dashboard"
+    } else {
+      setState({ error: result.error })
+      setIsLoading(false)
+    }
+  }
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -41,7 +44,7 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
           <CardDescription>Enter your details below to create a new account</CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={formAction}>
+          <form onSubmit={handleSubmit}>
             {state?.error && (
               <div className="bg-red-500/10 border border-red-500/50 text-red-700 px-4 py-3 rounded mb-4">
                 {state.error}
@@ -57,18 +60,27 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
             <div className="flex flex-col gap-6">
               <div className="grid gap-3">
                 <Label htmlFor="name">Full Name</Label>
-                <Input id="name" name="fullName" type="text" placeholder="John Doe" required />
+                <Input id="name" name="name" type="text" placeholder="John Doe" autoComplete="name" required />
               </div>
               <div className="grid gap-3">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" name="email" type="email" placeholder="m@example.com" required />
+                <Input id="email" name="email" type="email" placeholder="m@example.com" autoComplete="email" required />
               </div>
               <div className="grid gap-3">
                 <Label htmlFor="password">Password</Label>
-                <Input id="password" name="password" type="password" required />
+                <Input id="password" name="password" type="password" autoComplete="new-password" required />
               </div>
               <div className="flex flex-col gap-3">
-                <SubmitButton />
+                <Button type="submit" disabled={isLoading} className="bg-[#A67C52] w-full hover:bg-[#BF926A]">
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating account...
+                    </>
+                  ) : (
+                    "Create Account"
+                  )}
+                </Button>
               </div>
             </div>
             <div className="mt-4 text-center text-sm">

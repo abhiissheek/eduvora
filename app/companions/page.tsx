@@ -1,45 +1,21 @@
-import { createServerClient } from "@supabase/ssr"
-import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Brain, Plus, MessageCircle, Settings } from "lucide-react"
 import Link from "next/link"
+import { getCurrentUser } from "@/lib/auth-utils"
 
 async function getCompanions() {
-  const cookieStore = cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
-        },
-      },
-    },
-  )
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
+  const user = await getCurrentUser()
+  
+  if (!user) {
     redirect("/login")
   }
 
-  const { data: companions } = await supabase
-    .from("ai_companions")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-
-  return companions || []
+  // Return empty array - no pre-populated companions
+  // In production, you'd fetch from your database based on user._id
+  return [] as any[]
 }
 
 export default async function CompanionsPage() {

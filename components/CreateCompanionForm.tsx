@@ -104,41 +104,42 @@ export function CreateCompanionForm() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center">
-          <Brain className="h-5 w-5 mr-2 text-blue-600" />
+    <Card className="bg-white/10 backdrop-blur-sm border-white/20 shadow-2xl">
+      <CardHeader className="text-center">
+        <CardTitle className="flex items-center justify-center text-2xl text-white">
+          <Brain className="h-6 w-6 mr-3 text-[#F5F1ED]" />
           Design Your AI Companion
         </CardTitle>
-        <CardDescription>Create a personalized AI tutor tailored to your learning style and goals</CardDescription>
+        <CardDescription className="text-white/80 text-lg">Create a personalized AI tutor tailored to your learning style and goals</CardDescription>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+      <CardContent className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-8">
           {/* Basic Information */}
-          <div className="space-y-4">
+          <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <Label htmlFor="name">Companion Name</Label>
+              <Label htmlFor="name" className="text-white font-semibold text-lg">Companion Name</Label>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                 placeholder="e.g., Professor Smith, Math Mentor Maya"
+                className="mt-2 bg-white/10 border-white/20 text-white placeholder-white/60 focus:border-[#F5F1ED] focus:ring-[#F5F1ED]/20"
                 required
               />
             </div>
 
             <div>
-              <Label htmlFor="subject">Subject</Label>
+              <Label htmlFor="subject" className="text-white font-semibold text-lg">Subject</Label>
               <Select
                 value={formData.subject}
                 onValueChange={(value) => setFormData((prev) => ({ ...prev, subject: value }))}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose a subject" />
+                <SelectTrigger className="mt-2 bg-white/10 border-white/20 text-white focus:border-[#F5F1ED] focus:ring-[#F5F1ED]/20">
+                  <SelectValue placeholder="Choose a subject" className="text-white/60" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white/95 backdrop-blur-sm border-white/20">
                   {subjects.map((subject) => (
-                    <SelectItem key={subject} value={subject}>
+                    <SelectItem key={subject} value={subject} className="text-gray-800 hover:bg-[#8B6F47]/10">
                       {subject}
                     </SelectItem>
                   ))}
@@ -148,9 +149,9 @@ export function CreateCompanionForm() {
           </div>
 
           {/* Difficulty Level */}
-          <div>
-            <Label>Difficulty Level: {formData.difficulty_level[0]}</Label>
-            <div className="mt-2">
+          <div className="bg-white/5 p-6 rounded-xl border border-white/10">
+            <Label className="text-white font-semibold text-lg">Difficulty Level: {formData.difficulty_level[0]}</Label>
+            <div className="mt-4">
               <Slider
                 value={formData.difficulty_level}
                 onValueChange={(value) => setFormData((prev) => ({ ...prev, difficulty_level: value }))}
@@ -159,7 +160,7 @@ export function CreateCompanionForm() {
                 step={1}
                 className="w-full"
               />
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <div className="flex justify-between text-sm text-white/70 mt-3">
                 <span>Beginner</span>
                 <span>Intermediate</span>
                 <span>Advanced</span>
@@ -169,20 +170,20 @@ export function CreateCompanionForm() {
 
           {/* Teaching Style */}
           <div>
-            <Label>Teaching Style</Label>
+            <Label className="text-white font-semibold text-lg">Teaching Style</Label>
             <Select
               value={formData.teaching_style}
               onValueChange={(value) => setFormData((prev) => ({ ...prev, teaching_style: value }))}
             >
-              <SelectTrigger>
-                <SelectValue placeholder="Choose teaching approach" />
+              <SelectTrigger className="mt-2 bg-white/10 border-white/20 text-white focus:border-[#F5F1ED] focus:ring-[#F5F1ED]/20">
+                <SelectValue placeholder="Choose teaching approach" className="text-white/60" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white/95 backdrop-blur-sm border-white/20">
                 {teachingStyles.map((style) => (
-                  <SelectItem key={style.value} value={style.value}>
+                  <SelectItem key={style.value} value={style.value} className="text-gray-800 hover:bg-[#8B6F47]/10">
                     <div>
                       <div className="font-medium">{style.label}</div>
-                      <div className="text-xs text-gray-500">{style.description}</div>
+                      <div className="text-xs text-gray-600">{style.description}</div>
                     </div>
                   </SelectItem>
                 ))}
@@ -191,15 +192,19 @@ export function CreateCompanionForm() {
           </div>
 
           {/* Personality Traits */}
-          <div>
-            <Label>Personality Traits</Label>
-            <p className="text-sm text-gray-600 mb-3">Select traits that describe your ideal tutor</p>
-            <div className="flex flex-wrap gap-2">
+          <div className="bg-white/5 p-6 rounded-xl border border-white/10">
+            <Label className="text-white font-semibold text-lg">Personality Traits</Label>
+            <p className="text-sm text-white/70 mb-4 mt-2">Select traits that describe your ideal tutor</p>
+            <div className="flex flex-wrap gap-3">
               {personalityTraits.map((trait) => (
                 <Badge
                   key={trait}
                   variant={formData.personality_traits.includes(trait) ? "default" : "outline"}
-                  className="cursor-pointer hover:bg-blue-100"
+                  className={`cursor-pointer px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                    formData.personality_traits.includes(trait)
+                      ? "bg-[#8B6F47] text-white hover:bg-[#8B6F47]/80 border-[#8B6F47]"
+                      : "bg-white/10 text-white/80 border-white/30 hover:bg-white/20 hover:border-white/50"
+                  }`}
                   onClick={() => handlePersonalityToggle(trait)}
                 >
                   {trait}
@@ -210,41 +215,49 @@ export function CreateCompanionForm() {
 
           {/* Learning Objectives */}
           <div>
-            <Label htmlFor="objectives">Learning Objectives</Label>
+            <Label htmlFor="objectives" className="text-white font-semibold text-lg">Learning Objectives</Label>
             <Textarea
               id="objectives"
               value={formData.learning_objectives}
               onChange={(e) => setFormData((prev) => ({ ...prev, learning_objectives: e.target.value }))}
               placeholder="What do you want to achieve? e.g., Master calculus concepts, Prepare for exams, Understand complex theories..."
-              rows={3}
+              rows={4}
+              className="mt-2 bg-white/10 border-white/20 text-white placeholder-white/60 focus:border-[#F5F1ED] focus:ring-[#F5F1ED]/20 resize-none"
             />
           </div>
 
           {/* Custom Instructions */}
           <div>
-            <Label htmlFor="instructions">Custom Instructions (Optional)</Label>
+            <Label htmlFor="instructions" className="text-white font-semibold text-lg">Custom Instructions (Optional)</Label>
             <Textarea
               id="instructions"
               value={formData.custom_instructions}
               onChange={(e) => setFormData((prev) => ({ ...prev, custom_instructions: e.target.value }))}
               placeholder="Any specific preferences or requirements for your AI companion..."
-              rows={3}
+              rows={4}
+              className="mt-2 bg-white/10 border-white/20 text-white placeholder-white/60 focus:border-[#F5F1ED] focus:ring-[#F5F1ED]/20 resize-none"
             />
           </div>
 
-          <Button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700">
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating Companion...
-              </>
-            ) : (
-              <>
-                <Brain className="mr-2 h-4 w-4" />
-                Create AI Companion
-              </>
-            )}
-          </Button>
+          <div className="pt-6">
+            <Button 
+              type="submit" 
+              disabled={loading} 
+              className="w-full bg-[#8B6F47] hover:bg-[#8B6F47]/90 text-white font-semibold py-4 text-lg rounded-xl shadow-lg transition-all duration-200 transform hover:scale-[1.02]"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-3 h-5 w-5 animate-spin" />
+                  Creating Companion...
+                </>
+              ) : (
+                <>
+                  <Brain className="mr-3 h-5 w-5" />
+                  Create AI Companion
+                </>
+              )}
+            </Button>
+          </div>
         </form>
       </CardContent>
     </Card>

@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MERN Auth Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f9fafb;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #111827;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        
+        button:hover {
+            background-color: #4338ca;
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background-color: #6b7280;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #4b5563;
+        }
+        
+        .btn-danger {
+            background-color: #dc2626;
+        }
+        
+        .btn-danger:hover {
+            background-color: #b91c1c;
+        }
+        
+        .message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        
+        .error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+        
+        .user-info {
+            background-color: #f3f4f6;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        
+        .user-info h3 {
+            margin-bottom: 10px;
+            color: #111827;
+        }
+        
+        .user-info p {
+            margin: 5px 0;
+            color: #374151;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>MERN Authentication Test</h1>
+        
+        <div id="message"></div>
+        
+        <!-- Login/Register Form -->
+        <div id="authForm">
+            <div class="form-group">
+                <label for="name">Name (for registration)</label>
+                <input type="text" id="name" placeholder="Full Name">
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" placeholder="Email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="Password" required>
+            </div>
+            
+            <button id="registerBtn">Register</button>
+            <button id="loginBtn" class="btn-secondary">Login</button>
+        </div>
+        
+        <!-- Dashboard -->
+        <div id="dashboard" class="hidden">
+            <h2>Dashboard</h2>
+            <div id="userInfo" class="user-info"></div>
+            <button id="logoutBtn" class="btn-danger">Logout</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5001/api/auth';
+        let currentUser = null;
+        let token = localStorage.getItem('token');
+
+        // DOM elements
+        const authForm = document.getElementById('authForm');
+        const dashboard = document.getElementById('dashboard');
+        const messageDiv = document.getElementById('message');
+        const nameInput = document.getElementById('name');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const registerBtn = document.getElementById('registerBtn');
+        const loginBtn = document.getElementById('loginBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const userInfo = document.getElementById('userInfo');
+
+        // Show message
+        function showMessage(text, type = 'success') {
+            messageDiv.innerHTML = `<div class="message ${type}">${text}</div>`;
+            setTimeout(() => {
+                messageDiv.innerHTML = '';
+            }, 5000);
+        }
+
+        // API call helper
+        async function apiCall(endpoint, data = null, method = 'GET') {
+            const options = {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            };
+
+            if (token) {
+                options.headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            if (data) {
+                options.body = JSON.stringify(data);
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, options);
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.message || 'Request failed');
+                }
+                
+                return result;
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        // Register user
+        async function register() {
+            const name = nameInput.value.trim();
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+
+            if (!name || !email || !password) {
+                showMessage('Please fill in all fields', 'error');
+                return;
+            }
+
+            try {
+                registerBtn.disabled = true;
+                registerBtn.textContent = 'Registering...';
+                
+                const result = await apiCall('/register', { name, email, password }, 'POST');
+                
+                if (result.success) {
+                    token = result.data.token;
+                    localStorage.setItem('token', token);
+                    currentUser = result.data;
+                    showDashboard();
+                    showMessage('Registration successful!');
+                }
+            } catch (error) {
+                showMessage(error.message, 'error');
+            } finally {
+                registerBtn.disabled = false;
+                registerBtn.textContent = 'Register';
+            }
+        }
+
+        // Login user
+        async function login() {
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+
+            if (!email || !password) {
+                showMessage('Please fill in email and password', 'error');
+                return;
+            }
+
+            try {
+                loginBtn.disabled = true;
+                loginBtn.textContent = 'Logging in...';
+                
+                const result = await apiCall('/login', { email, password }, 'POST');
+                
+                if (result.success) {
+                    token = result.data.token;
+                    localStorage.setItem('token', token);
+                    currentUser = result.data;
+                    showDashboard();
+                    showMessage('Login successful!');
+                }
+            } catch (error) {
+                showMessage(error.message, 'error');
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Login';
+            }
+        }
+
+        // Get current user
+        async function getCurrentUser() {
+            try {
+                const result = await apiCall('/me');
+                if (result.success) {
+                    currentUser = result.data;
+                    showDashboard();
+                }
+            } catch (error) {
+                localStorage.removeItem('token');
+                token = null;
+                showAuthForm();
+            }
+        }
+
+        // Logout
+        function logout() {
+            localStorage.removeItem('token');
+            token = null;
+            currentUser = null;
+            showAuthForm();
+            showMessage('Logged out successfully');
+        }
+
+        // Show dashboard
+        function showDashboard() {
+            authForm.classList.add('hidden');
+            dashboard.classList.remove('hidden');
+            
+            userInfo.innerHTML = `
+                <h3>User Information</h3>
+                <p><strong>Name:</strong> ${currentUser.name}</p>
+                <p><strong>Email:</strong> ${currentUser.email}</p>
+                <p><strong>Role:</strong> ${currentUser.role}</p>
+                <p><strong>User ID:</strong> ${currentUser._id}</p>
+            `;
+        }
+
+        // Show auth form
+        function showAuthForm() {
+            dashboard.classList.add('hidden');
+            authForm.classList.remove('hidden');
+            
+            // Clear form
+            nameInput.value = '';
+            emailInput.value = '';
+            passwordInput.value = '';
+        }
+
+        // Event listeners
+        registerBtn.addEventListener('click', register);
+        loginBtn.addEventListener('click', login);
+        logoutBtn.addEventListener('click', logout);
+
+        // Check if user is already logged in
+        if (token) {
+            getCurrentUser();
+        } else {
+            showAuthForm();
+        }
+    </script>
+</body>
+</html>

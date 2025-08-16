@@ -1,24 +1,13 @@
-import { createServerClient } from "@supabase/ssr"
-import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
+import { cookies } from "next/headers"
 
 export async function POST(request: Request) {
   try {
+    // Get JWT token from cookies
     const cookieStore = cookies()
-    const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        },
-      },
-    })
+    const token = cookieStore.get('auth-token')?.value
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-
-    if (authError || !user) {
+    if (!token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -33,34 +22,14 @@ export async function POST(request: Request) {
       learning_objectives,
     } = body
 
-    console.log("[v0] Creating companion for user:", user.id, "with data:", { name, subject })
-
-    const { data: existingProfile } = await supabase.from("profiles").select("id").eq("id", user.id).single()
-
-    if (!existingProfile) {
-      console.log("[v0] Creating missing user profile for:", user.id)
-      const { error: profileError } = await supabase.from("profiles").insert({
-        id: user.id,
-        email: user.email,
-        full_name: user.user_metadata?.full_name || user.email?.split("@")[0] || "User",
-        subscription_tier: "free",
-        subscription_status: "active",
-        current_streak: 0,
-        longest_streak: 0,
-      })
-
-      if (profileError) {
-        console.error("[v0] Error creating user profile:", profileError)
-        return NextResponse.json({ error: "Failed to create user profile" }, { status: 500 })
-      }
-      console.log("[v0] User profile created successfully")
-    }
-
-    // Create AI companion
-    const { data: companion, error } = await supabase
-      .from("ai_companions")
-      .insert({
-        user_id: user.id,
+    // Forward request to MERN backend
+    const backendResponse = await fetch(`http://localhost:5001/api/companions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
         name,
         subject,
         difficulty_level,
@@ -68,57 +37,50 @@ export async function POST(request: Request) {
         personality_traits,
         custom_instructions,
         learning_objectives,
-        is_active: true,
       })
-      .select()
-      .single()
+    })
 
-    if (error) {
-      console.error("[v0] Error creating companion:", error)
-      return NextResponse.json({ error: "Failed to create companion" }, { status: 500 })
+    if (!backendResponse.ok) {
+      const errorData = await backendResponse.json()
+      return NextResponse.json({ error: errorData.message || "Failed to create companion" }, { status: backendResponse.status })
     }
 
-    console.log("[v0] Companion created successfully:", companion.id)
+    const companion = await backendResponse.json()
     return NextResponse.json(companion)
   } catch (error) {
-    console.error("[v0] API error:", error)
+    console.error("API error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
 export async function GET() {
   try {
+    // Get JWT token from cookies
     const cookieStore = cookies()
-    const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        },
-      },
-    })
+    const token = cookieStore.get('auth-token')?.value
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-
-    if (authError || !user) {
+    if (!token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { data: companions, error } = await supabase
-      .from("ai_companions")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
+    // Forward request to MERN backend
+    const backendResponse = await fetch(`http://localhost:5001/api/companions`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    })
 
-    if (error) {
-      return NextResponse.json({ error: "Failed to fetch companions" }, { status: 500 })
+    if (!backendResponse.ok) {
+      const errorData = await backendResponse.json()
+      return NextResponse.json({ error: errorData.message || "Failed to fetch companions" }, { status: backendResponse.status })
     }
 
+    const companions = await backendResponse.json()
     return NextResponse.json(companions)
   } catch (error) {
-    console.error("[v0] API error:", error)
+    console.error("API error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

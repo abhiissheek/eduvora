@@ -1,19 +1,33 @@
-import { createServerClient } from "@supabase/ssr"
-import { cookies } from "next/headers"
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    const body = await request.json()
+    
+    // Get auth token from cookies
     const cookieStore = cookies()
-    const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!, {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        },
+    const authToken = cookieStore.get('auth-token')?.value
+    
+    if (!authToken) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+    
+    // Call MERN backend chat API
+    const response = await fetch('http://localhost:5001/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`,
       },
+      body: JSON.stringify(body),
     })
+    
+    const result = await response.json()
+    
+    return NextResponse.json(result, { status: response.status })
   } catch (error) {
-    console.error("Chat API error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error('Chat API error:', error)
+    return NextResponse.json({ error: 'Chat request failed' }, { status: 500 })
   }
 }

@@ -93,7 +93,7 @@ export function LearningGameification({ userId, stats }: LearningGameificationPr
   }, [stats])
 
   const getNextLevelPoints = (currentLevel: number) => {
-    return currentLevel * 100 // 100 points per level
+    return currentLevel * 100 
   }
 
   const getCurrentLevelProgress = () => {
@@ -108,7 +108,7 @@ export function LearningGameification({ userId, stats }: LearningGameificationPr
 
   return (
     <div className="space-y-6">
-      {/* Level and Points */}
+      
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
@@ -178,7 +178,7 @@ export function LearningGameification({ userId, stats }: LearningGameificationPr
         </Card>
       </div>
 
-      {/* Achievements */}
+      
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
@@ -191,7 +191,7 @@ export function LearningGameification({ userId, stats }: LearningGameificationPr
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {/* Unlocked Achievements */}
+            
             {unlockedAchievements.length > 0 && (
               <div>
                 <h4 className="font-medium text-green-600 mb-3">Unlocked</h4>
@@ -215,7 +215,7 @@ export function LearningGameification({ userId, stats }: LearningGameificationPr
               </div>
             )}
 
-            {/* Locked Achievements */}
+            
             {lockedAchievements.length > 0 && (
               <div>
                 <h4 className="font-medium text-gray-600 mb-3">In Progress</h4>

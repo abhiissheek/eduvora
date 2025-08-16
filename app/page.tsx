@@ -67,18 +67,18 @@ export default function HomePage() {
   }
 
   const handleLogin = () => {
-    console.log("[v0] Login button clicked")
+    console.log("Login button clicked")
     window.location.href = "/login"
   }
 
   const handlePlanSelection = (planType: string) => {
-    console.log(`[v0] Plan selected: ${planType}`)
+    console.log(`Plan selected: ${planType}`)
     setSelectedPlan(planType)
     setShowPricingModal(true)
   }
 
   const handleSocialMedia = (platform: string) => {
-    console.log(`[v0] Opening ${platform}`)
+    console.log(`Opening ${platform}`)
     const urls = {
       facebook: "https://facebook.com/eduvora",
       twitter: "https://twitter.com/eduvora",
@@ -88,7 +88,7 @@ export default function HomePage() {
   }
 
   const handleDemo = () => {
-    console.log("[v0] Starting live demo")
+    console.log("Starting live demo")
     setShowDemoVideo(true)
   }
 
@@ -541,34 +541,35 @@ export default function HomePage() {
 
             {/* Support Links */}
             <div className="space-y-4">
-              <h4 className="text-lg font-semibold text-white">Support</h4>
-              <div className="space-y-2">
-                <button
-                  onClick={() => handleNavigation("help")}
-                  className="text-white/60 hover:text-white text-sm transition-colors"
-                >
-                  Help Center
-                </button>
-                <button
-                  onClick={() => handleNavigation("documentation")}
-                  className="text-white/60 hover:text-white text-sm transition-colors"
-                >
-                  Documentation
-                </button>
-                <button
-                  onClick={() => handleNavigation("privacy")}
-                  className="text-white/60 hover:text-white text-sm transition-colors"
-                >
-                  Privacy Policy
-                </button>
-                <button
-                  onClick={() => handleNavigation("terms")}
-                  className="text-white/60 hover:text-white text-sm transition-colors"
-                >
-                  Terms of Service
-                </button>
-              </div>
-            </div>
+  <h4 className="text-lg font-semibold text-white">Support</h4>
+  {/* FIX: Added flexbox classes to align items in a vertical column */}
+  <div className="flex flex-col items-start space-y-2">
+    <button
+      onClick={() => handleNavigation("help")}
+      className="text-white/60 hover:text-white text-sm transition-colors"
+    >
+      Help Center
+    </button>
+    <button
+      onClick={() => handleNavigation("documentation")}
+      className="text-white/60 hover:text-white text-sm transition-colors"
+    >
+      Documentation
+    </button>
+    <button
+      onClick={() => handleNavigation("privacy")}
+      className="text-white/60 hover:text-white text-sm transition-colors"
+    >
+      Privacy Policy
+    </button>
+    <button
+      onClick={() => handleNavigation("terms")}
+      className="text-white/60 hover:text-white text-sm transition-colors"
+    >
+      Terms of Service
+    </button>
+  </div>
+</div>
           </div>
 
           {/* Bottom Bar */}
