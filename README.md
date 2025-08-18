@@ -70,11 +70,12 @@
 2. **Install dependencies**
    ```bash
    npm install
-3. **Set up environment variables**
-   
-   -Database URL
-   -JWT Secret
-   -API Keys (if any)   
+3. **Set up environment variables**  
+
+   - Database URL  
+   - JWT Secret  
+   - API Keys (if any)  
+
 5. **Run the development server**
    ```bash
    npm run dev
